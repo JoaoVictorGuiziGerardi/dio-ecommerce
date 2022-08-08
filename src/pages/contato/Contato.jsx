@@ -59,31 +59,78 @@ const MsgErro = styled.div`
     }
 `;
 
+const MsgSucesso = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    button{
+      margin: 2px 2px;
+      background-color: transparent;
+      color: green;
+      width: 5vw;
+      padding: 3px;
+    }
+
+    button:hover{
+      background-color: green;
+      color: white;
+    }
+`;
+
 const Contato = () => {
   const url = 'http://localhost:5000/messages';
   const [validador, setValidador] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [autor, setAutor] = useState('');
-  const [conteudo, setConteudo] = useState('');
+  const [mensagem, setMensagem] = useState('');
   const [mensagens, setMensagens] = useState([]);
+  const [render, setRender] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       const response = await fetch(url);
       const data = await response.json();
       setMensagens(data);
     }
     fetchData();
-  }, [])
+  }, [render])
 
   const enviarMensagem = () => {
     setValidador(false);
 
-    if (autor.length <= 0 || conteudo.length <= 0){
+    if (autor.length <= 0 || mensagem.length <= 0){
       setValidador(!validador);
     }
+  
+    const bodyForm = {
+      autor: autor,
+      mensagem: mensagem
+    }
+
+    const fetchData = async () => {
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(bodyForm)
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        if(data) {
+          setRender(true);
+          setSuccess(true);
+          setTimeout(() => {
+            setSuccess(false);
+          }, 5000)
+        }
+      })
+    }
+    fetchData();
     
     setAutor('');
-    setConteudo('');
+    setMensagem('');
 
     document.getElementById('nome').value = '';
     document.getElementById('mensagem').value = '';
@@ -91,6 +138,7 @@ const Contato = () => {
 
   const fecharMensagem = () => {
     setValidador(false);
+    setSuccess(false);
   }
 
   return (
@@ -106,7 +154,7 @@ const Contato = () => {
         </CamposWrapper>
         <CamposWrapper>
           <label htmlFor="mensagem"> Mensagem </label>
-          <textarea name="mensagem" id="mensagem" onChange={(event) => {setConteudo(event.target.value)}} cols="30" rows="10" placeholder='Digite sua Mensagem!'></textarea>
+          <textarea name="mensagem" id="mensagem" onChange={(event) => {setMensagem(event.target.value)}} cols="30" rows="10" placeholder='Digite sua Mensagem!'></textarea>
         </CamposWrapper>
         
         {validador &&
@@ -114,6 +162,13 @@ const Contato = () => {
             <strong>Preencha todos os campos!</strong>
             <Button onClick={fecharMensagem}> <strong>X</strong> </Button>
           </MsgErro>
+        }
+
+        {success &&
+          <MsgSucesso>
+            <strong>Mensagem enviada com sucesso!</strong>
+            <Button onClick={fecharMensagem}> <strong>X</strong> </Button>
+          </MsgSucesso>
         }
 
         <CamposWrapper>
